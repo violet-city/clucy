@@ -5,3 +5,7 @@ clucy*.jar
 pom.xml
 pom.xml.asc
 .lein-failures
+
+/.idea
+*.iml
+.nrepl-port

@@ -1,4 +1,4 @@
-(ns clucy.core
+(ns city.violet.clucy.core
   (:import (java.io StringReader File)
            (org.apache.lucene.analysis Analyzer TokenStream)
            (org.apache.lucene.analysis.standard StandardAnalyzer)
@@ -57,21 +57,21 @@
   :analyzed - when :indexed is enabled use this option to disable/eneble Analyzer for current field.
   :norms - when :indexed is enabled user this option to disable/enable the storing of norms."
   ([document key value]
-     (add-field document key value {}))
+   (add-field document key value {}))
 
   ([document key value meta-map]
-     (.add ^Document document
-           (Field. (as-str key) (as-str value)
-                   (if (false? (:stored meta-map))
-                     Field$Store/NO
-                     Field$Store/YES)
-                   (if (false? (:indexed meta-map))
-                     Field$Index/NO
-                     (case [(false? (:analyzed meta-map)) (false? (:norms meta-map))]
-                       [false false] Field$Index/ANALYZED
-                       [true false] Field$Index/NOT_ANALYZED
-                       [false true] Field$Index/ANALYZED_NO_NORMS
-                       [true true] Field$Index/NOT_ANALYZED_NO_NORMS))))))
+   (.add ^Document document
+         (Field. (as-str key) (as-str value)
+                 (if (false? (:stored meta-map))
+                   Field$Store/NO
+                   Field$Store/YES)
+                 (if (false? (:indexed meta-map))
+                   Field$Index/NO
+                   (case [(false? (:analyzed meta-map)) (false? (:norms meta-map))]
+                     [false false] Field$Index/ANALYZED
+                     [true false] Field$Index/NOT_ANALYZED
+                     [false true] Field$Index/ANALYZED_NO_NORMS
+                     [true true] Field$Index/NOT_ANALYZED_NO_NORMS))))))
 
 (defn- map-stored
   "Returns a hash-map containing all of the values in the map that
@@ -117,30 +117,30 @@
         (doseq [[key value] m]
           (.add query
                 (BooleanClause.
-                 (TermQuery. (Term. (.toLowerCase (as-str key))
-                                    (.toLowerCase (as-str value))))
-                 BooleanClause$Occur/MUST)))
+                  (TermQuery. (Term. (.toLowerCase (as-str key))
+                                     (.toLowerCase (as-str value))))
+                  BooleanClause$Occur/MUST)))
         (.deleteDocuments writer query)))))
 
 (defn- document->map
   "Turn a Document object into a map."
   ([^Document document score]
-     (document->map document score (constantly nil)))
+   (document->map document score (constantly nil)))
   ([^Document document score highlighter]
-     (let [m (into {} (for [^Field f (.getFields document)]
-                        [(keyword (.name f)) (.stringValue f)]))
-           fragments (highlighter m) ; so that we can highlight :_content
-           m (dissoc m :_content)]
-       (with-meta
-         m
-         (-> (into {}
-                   (for [^Field f (.getFields document)
-                         :let [field-type (.fieldType f)]]
-                     [(keyword (.name f)) {:indexed (.indexed field-type)
-                                           :stored (.stored field-type)
-                                           :tokenized (.tokenized field-type)}]))
-             (assoc :_fragments fragments :_score score)
-             (dissoc :_content))))))
+   (let [m (into {} (for [^Field f (.getFields document)]
+                      [(keyword (.name f)) (.stringValue f)]))
+         fragments (highlighter m)                          ; so that we can highlight :_content
+         m (dissoc m :_content)]
+     (with-meta
+       m
+       (-> (into {}
+                 (for [^Field f (.getFields document)
+                       :let [field-type (.fieldType f)]]
+                   [(keyword (.name f)) {:indexed   (.indexed field-type)
+                                         :stored    (.stored field-type)
+                                         :tokenized (.tokenized field-type)}]))
+           (assoc :_fragments fragments :_score score)
+           (dissoc :_content))))))
 
 (defn- make-highlighter
   "Create a highlighter function which will take a map and return highlighted
@@ -149,11 +149,11 @@ fragments."
   (if config
     (let [indexReader (.getIndexReader searcher)
           scorer (QueryScorer. (.rewrite query indexReader))
-          config (merge {:field :_content
+          config (merge {:field         :_content
                          :max-fragments 5
-                         :separator "..."
-                         :pre "<b>"
-                         :post "</b>"}
+                         :separator     "..."
+                         :pre           "<b>"
+                         :post          "</b>"}
                         config)
           {:keys [field max-fragments separator fragments-key pre post]} config
           highlighter (Highlighter. (SimpleHTMLFormatter. pre post) scorer)]
@@ -173,7 +173,7 @@ fragments."
   "Search the supplied index with a query string."
   [index query max-results
    & {:keys [highlight default-field default-operator page results-per-page]
-      :or {page 0 results-per-page max-results}}]
+      :or   {page 0 results-per-page max-results}}]
   (if (every? false? [default-field *content*])
     (throw (Exception. "No default search field specified"))
     (with-open [reader (index-reader index)]
@@ -184,32 +184,32 @@ fragments."
                                        *analyzer*)
                      (.setDefaultOperator (case (or default-operator :or)
                                             :and QueryParser/AND_OPERATOR
-                                            :or  QueryParser/OR_OPERATOR)))
+                                            :or QueryParser/OR_OPERATOR)))
             query (.parse parser query)
             hits (.search searcher query (int max-results))
             highlighter (make-highlighter query searcher highlight)
             start (* page results-per-page)
             end (min (+ start results-per-page) (.totalHits hits))]
         (doall
-         (with-meta (for [hit (map (partial aget (.scoreDocs hits))
-                                   (range start end))]
-                      (document->map (.doc ^IndexSearcher searcher
-                                           (.doc ^ScoreDoc hit))
-                                     (.score ^ScoreDoc hit)
+          (with-meta (for [hit (map (partial aget (.scoreDocs hits))
+                                    (range start end))]
+                       (document->map (.doc ^IndexSearcher searcher
+                                            (.doc ^ScoreDoc hit))
+                                      (.score ^ScoreDoc hit)
 
-                                     highlighter))
-           {:_total-hits (.totalHits hits)
-            :_max-score (.getMaxScore hits)}))))))
+                                      highlighter))
+                     {:_total-hits (.totalHits hits)
+                      :_max-score  (.getMaxScore hits)}))))))
 
 (defn search-and-delete
   "Search the supplied index with a query string and then delete all
 of the results."
   ([index query]
-     (if *content*
-       (search-and-delete index query :_content)
-       (throw (Exception. "No default search field specified"))))
+   (if *content*
+     (search-and-delete index query :_content)
+     (throw (Exception. "No default search field specified"))))
   ([index query default-field]
-     (with-open [writer (index-writer index)]
-       (let [parser (QueryParser. *version* (as-str default-field) *analyzer*)
-             query  (.parse parser query)]
-         (.deleteDocuments writer query)))))
+   (with-open [writer (index-writer index)]
+     (let [parser (QueryParser. *version* (as-str default-field) *analyzer*)
+           query (.parse parser query)]
+       (.deleteDocuments writer query)))))
