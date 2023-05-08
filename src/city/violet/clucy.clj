@@ -1,4 +1,4 @@
-(ns city.violet.clucy.core
+(ns city.violet.clucy
   (:import (java.io StringReader File)
            (org.apache.lucene.analysis Analyzer TokenStream)
            (org.apache.lucene.analysis.standard StandardAnalyzer)
