@@ -1,0 +1,6 @@
+{:paths ["src"]
+ :deps  {org.clojure/clojure                       {:mvn/version "1.11.1"}
+         org.apache.lucene/lucene-core             {:mvn/version "4.2.0"}
+         org.apache.lucene/lucene-queryparser      {:mvn/version "4.2.0"}
+         org.apache.lucene/lucene-analyzers-common {:mvn/version "4.2.0"}
+         org.apache.lucene/lucene-highlighter      {:mvn/version "4.2.0"}}}
